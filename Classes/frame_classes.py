@@ -48,10 +48,6 @@ class MainFrame(noname.MyFrame1):
     def alpha_choice(self, event):
         self.girl_front_line.alpha_choice()
 
-    def export_choice(self, event):
-
-        self.girl_front_line.export_choice()
-
     def search_rgb(self, event):
         self.girl_front_line.search_rgb()
 
@@ -76,6 +72,9 @@ class MainFrame(noname.MyFrame1):
         else:
             pass
 
+    def export_choice(self, event):
+        self.girl_front_line.export_choice()
+
     def setting(self, event):
         dialog = Setting(self, self.setting, self.default)
         temp = dialog.ShowModal()
@@ -93,11 +92,11 @@ class MainFrame(noname.MyFrame1):
                 self.auto_open_choice_pic = setting_dic["full"]["auto_open"]
                 self.finish_exit = setting_dic["full"]["finish_exit"]
 
-
-                self.girl_front_line.update_setting(self.setting_self, self.default)
+                self.girl_front_line.update_setting(self.setting, self.default)
 
 
 class Setting(noname.MyDialog1):
+
     def __init__(self, parent, setting_dic, default):
         super(Setting, self).__init__(parent=parent)
 
@@ -109,6 +108,8 @@ class Setting(noname.MyDialog1):
         self.girl_line_new_dir = setting_dic["girl_line"]["new_dir"]
         self.girl_line_check = setting_dic["girl_line"]["check_before_start"]
 
+        self.girl_line_divide_list = setting_dic["girl_line"]['divide_list']
+
         self.girl_line_default_rgb_dir = self.default["girl_line"]['default_rgb_dir']
         self.girl_line_default_alpha_dir = self.default["girl_line"]['default_alpha_dir']
 
@@ -117,7 +118,20 @@ class Setting(noname.MyDialog1):
         self.auto_open_choice_pic = setting_dic["full"]["auto_open"]
         self.finish_exit = setting_dic["full"]["finish_exit"]
 
+        self.girl_line_use_type = setting_dic["girl_line"]["use_type"]
+
         self.IsChange = False
+
+        self.IsChange = False
+        self.lock = self.default["lock"]
+        self.export = self.default["export"]
+
+        self.gl_div_list = []
+        self.reset_gl_pattern()
+        self.index = len(self.gl_div_list) + 1
+
+        self.__choice = None
+        self.m_button_del.Enable(False)
 
     def gl_show(self):
         self.m_radioBox_gfl_div.SetSelection(self.girl_line_div_type)
@@ -128,11 +142,15 @@ class Setting(noname.MyDialog1):
         self.m_dirPicker_gl_alpha_dir.SetPath(self.girl_line_default_rgb_dir)
         self.m_dirPicker_gl_rbg_dir.SetPath(self.girl_line_default_alpha_dir)
 
+        self.m_radioBox_type_use.SetSelection(self.girl_line_use_type)
+
     def change_work(self):
         self.setting["girl_line"]["div_type"] = self.m_radioBox_gfl_div.GetSelection()
         self.setting["girl_line"]["export_type"] = self.m_radioBox_gfl_ex.GetSelection()
         self.setting["girl_line"]["new_dir"] = self.m_checkBox_gfl_dir.GetValue()
         self.setting["girl_line"]["check_before_start"] = self.m_checkBox_check.GetValue()
+
+        self.setting["girl_line"]["use_type"]=self.m_radioBox_type_use.GetSelection()
 
         self.setting["full"]["open_dir"] = self.m_checkBox_autoopen.GetValue()
         self.setting["full"]["skip_had"] = self.m_checkBox_pass_finished.GetValue()
@@ -169,3 +187,70 @@ class Setting(noname.MyDialog1):
 
         self.m_dirPicker_gl_rbg_dir.Enable(not self.lock)
         self.m_dirPicker_gl_alpha_dir.Enable(not self.lock)
+
+    def reset_gl_pattern(self):
+        self.gl_div_list.clear()
+        for value in range(len(self.girl_line_divide_list)):
+            val_key = str(value + 1)
+            value = self.girl_line_divide_list[value]
+            self.gl_div_list.append(
+                '%s)%s:\t%s' % (val_key, value['dir'], value['pattern']))
+
+    def change_div(self, event):
+        types = ([
+                     r'1）其他：^.+$',
+                     r'2）人形：^[Pp]ic_[\S ]+_\d+(_D)*$',
+                     r'3）人形皮肤：^[Pp]ic_[\S ]+(_D)*$',
+                 ],
+                 [
+                     r'1）其他：^.+$',
+                     r'2）人形：^[Pp]ic_[\S ]+?_*[^D][1-9]*$',
+                     r'3）人形大破：^[pP]ic_[\S ]+?_*[1-9]*_D$'
+                 ],
+                 [
+                     r'1）其他：^.+$',
+                     r'2）人形：^pic_.+$',
+
+                 ])
+        a = self.m_radioBox_type_use.GetSelection()
+        if self.m_radioBox_type_use.GetSelection() == 0:
+            self.m_listBox_gl_limit.Clear()
+            if self.m_radioBox_gfl_ex.GetSelection() == 1:
+                self.change(event)
+
+                self.m_listBox_gl_limit.Set(types[2])
+
+            elif self.m_radioBox_gfl_ex.GetSelection() == 3:
+                self.change(event)
+
+                self.m_listBox_gl_limit.Set(types[0])
+
+            elif self.m_radioBox_gfl_ex.GetSelection() == 4:
+                self.change(event)
+
+                self.m_listBox_gl_limit.Set(types[1])
+            else:
+                pass
+
+    def change(self, event):
+        self.m_sdbSizer1Apply.Enable(True)
+
+    def ok_click(self, event):
+        self.change_work()
+        self.IsChange = True
+        self.Destroy()
+
+    def apply_click(self, event):
+        self.change_work()
+        self.IsChange = True
+        self.m_sdbSizer1Apply.Enable(False)
+
+    def cancel_click(self, event):
+        self.IsChange = False
+        self.Destroy()
+
+    def GetValue(self):
+        return self.setting
+
+    def GetDefault(self):
+        return self.default
