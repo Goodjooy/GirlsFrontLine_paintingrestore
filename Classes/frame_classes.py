@@ -15,6 +15,15 @@ class MainFrame(noname.MyFrame1):
         with open('files\\default.json', 'r')as file:
             self.default = json.load(file)
 
+        try:
+            icon = wx.Icon("files\\icon.ico")
+        except FileNotFoundError:
+            pass
+        else:
+            self.SetIcon(icon)
+
+        self.start_path = os.getcwd()
+
         self.girl_line_div_type = self.setting["girl_line"]["div_type"]
         self.girl_line_export_type = self.setting["girl_line"]["export_type"]
         self.girl_line_new_dir = self.setting["girl_line"]["new_dir"]
